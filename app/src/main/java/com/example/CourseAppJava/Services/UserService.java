@@ -1,7 +1,7 @@
 package com.example.CourseAppJava.Services;
 
-import com.example.CourseAppJava.models.User;
-import com.example.CourseAppJava.models.UserRequest;
+import com.example.CourseAppJava.models.User.User;
+import com.example.CourseAppJava.models.User.UserRequest;
 
 import retrofit2.Call;
 import retrofit2.http.Body;

@@ -1,16 +1,16 @@
-package com.example.CourseAppJava.models;
+package com.example.CourseAppJava.models.User;
 
 import java.io.Serializable;
 
 public class User implements Serializable {
-    String id;
-    String name;
-    String email;
+    private String id;
+    private String name;
+    private String email;
 
 
 
 
-    public String getNumber() {
+    public String getId() {
         return id;
     }
 

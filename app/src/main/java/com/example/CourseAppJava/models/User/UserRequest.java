@@ -1,8 +1,8 @@
-package com.example.CourseAppJava.models;
+package com.example.CourseAppJava.models.User;
 
 public class UserRequest {
-    String email;
-    String password;
+    private String email;
+    private String password;
 
     public UserRequest(String email, String password) {
         this.email = email;

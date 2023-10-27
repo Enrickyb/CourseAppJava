@@ -12,8 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.CourseAppJava.Services.UserService;
-import com.example.CourseAppJava.models.User;
-import com.example.CourseAppJava.models.UserRequest;
+import com.example.CourseAppJava.models.User.User;
+import com.example.CourseAppJava.models.User.UserRequest;
 
 
 import retrofit2.Call;
@@ -62,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl("http://192.168.0.49:8090/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-
     }
 
     private void getData(String email, String password) {
