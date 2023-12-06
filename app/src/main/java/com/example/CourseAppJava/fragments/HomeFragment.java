@@ -1,4 +1,4 @@
-package com.example.CourseAppJava;
+package com.example.CourseAppJava.fragments;
 
 import android.os.Bundle;
 
@@ -12,9 +12,10 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.example.CourseAppJava.R;
+
 public class HomeFragment extends Fragment {
 
-    TextView totalExpenseTextView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -29,10 +30,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        totalExpenseTextView = getView().findViewById(R.id.totalExpenseTextView);
-
-
 
 
 

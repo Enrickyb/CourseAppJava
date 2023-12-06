@@ -1,10 +1,9 @@
-package com.example.CourseAppJava;
+package com.example.CourseAppJava.fragments;
 
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,16 +12,19 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import com.example.CourseAppJava.Adapters.ExpenseAdapter;
+import com.example.CourseAppJava.R;
+import com.example.CourseAppJava.ViewModel.ExpenseViewModel;
 import com.example.CourseAppJava.models.User.Transactions.Expense;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class transactionsFragment extends Fragment {
+public class ExpenseFragment extends Fragment {
     private ListView listView;
-    private Bundle expenseBundle;
+
     private List<Expense> expenses = new ArrayList<>();
     private ExpenseAdapter expenseAdapter;
+    private ExpenseViewModel expenseViewModel;
 
 
     @Override
@@ -30,11 +32,9 @@ public class transactionsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_transactions, container, false);
 
-        expenseBundle = this.getArguments();
+        expenseViewModel = new ViewModelProvider(requireActivity()).get(ExpenseViewModel.class);
+        List<Expense> expenses = expenseViewModel.getExpenses();
 
-        if (expenseBundle != null) {
-            expenses = (List<Expense>) expenseBundle.getSerializable("expenses");
-        }
 
         listView = view.findViewById(R.id.listView);
 

@@ -1,4 +1,4 @@
-package com.example.CourseAppJava;
+package com.example.CourseAppJava.Adapters;
 
 import android.os.Bundle;
 

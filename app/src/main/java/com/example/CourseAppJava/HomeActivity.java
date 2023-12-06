@@ -1,20 +1,23 @@
 package com.example.CourseAppJava;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
 
 
 import android.os.Bundle;
 import android.util.Log;
 
-import android.widget.TextView;
-
 import com.example.CourseAppJava.Adapters.ExpenseAdapter;
+import com.example.CourseAppJava.Services.UserService;
+import com.example.CourseAppJava.ViewModel.ExpenseViewModel;
 import com.example.CourseAppJava.models.User.Transactions.Expense;
 import com.example.CourseAppJava.models.User.Transactions.ExpenseService;
 import com.example.CourseAppJava.models.User.User;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.android.material.badge.BadgeDrawable;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -37,11 +40,14 @@ public class HomeActivity extends AppCompatActivity {
 
     private ExpenseAdapter expenseAdapter;
     private List<Expense> expenses = new ArrayList<>();
-    private ViewPager2 viewPager;
 
     private Bundle userBundle = new Bundle();
     private Bundle expensesBundle = new Bundle();
 
+    private NavHostFragment navHostFragment;
+    private NavController navController;
+
+    private ExpenseViewModel expenseViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,99 +55,125 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
 
-        TextView username = (TextView) findViewById(R.id.userNameTextView);
-
-        User user = (User) getIntent().getSerializableExtra("user");
-
-        username.setText(user.getName());
-        userBundle.putSerializable("user", user);
-
-        Log.i("user intent", user.getName());
 
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.0.49:8090/transaction/")
+                .baseUrl("http://192.168.0.49:8090/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
+        expenseViewModel = new ViewModelProvider(this).get(ExpenseViewModel.class);
 
-        getData(user.getId());
+        initNavigation();
 
-        viewPager = findViewById(R.id.viewPager);
 
-        configTabLayout();
+        String token = getIntent().getStringExtra("token");
+
+
+        getData(token);
+
+
+
+
 
 
 
     }
 
-    private void configTabLayout(){
+    private void initNavigation(){
+        navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.fragmentContainerView);
+        navController = navHostFragment.getNavController();
 
-        ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(this);
-        viewPager.setAdapter(viewPagerAdapter);
-
-
-        viewPagerAdapter.addFragment(new HomeFragment(), "Home", userBundle);
-        viewPagerAdapter.addFragment(new transactionsFragment(), "Transactions", expensesBundle);
-
-        viewPager.setOffscreenPageLimit(viewPagerAdapter.getItemCount());
         expenseAdapter = new ExpenseAdapter(this, expenses);
 
-        TabLayoutMediator mediator = new TabLayoutMediator(
-                findViewById(R.id.tabLayout),
-                viewPager,
-                (tab, position) -> tab.setText(viewPagerAdapter.getTitle(position))
-        );
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
-        mediator.attach();
+        NavigationUI.setupWithNavController(bottomNavigationView, navController);
     }
 
-    private void getData(String user_id) {
+
+    private void initBadge(){
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        BadgeDrawable badge = bottomNavigationView.getOrCreateBadge(R.id.transactionsFragment);
+        badge.setVisible(true);
+        Log.i("TAG", "initBadge: " + expenses.size());
+        badge.setNumber(expenses.size());
+    }
+
+
+    private void getData(String token) {
+
+        UserService userService = retrofit.create(UserService.class);
+
+        String authorizationHeader = "Bearer " + token;
+
+        Log.i("TAG", "getData: " + authorizationHeader);
+
+
+
+        Call<User> userResponseCall = userService.validate(authorizationHeader);
+
+    userResponseCall.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    User user = response.body();
+
+                    if (user != null) {
+
+                        getExpenses(authorizationHeader, user.getId());
+                    } else {
+                        Log.e("TAG", "User object is null");
+
+                    }
+
+
+                }else{
+                    Log.e("TAG", "onResponse data Error : " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+
+                Log.e("TAG", "onResponse data Failure: " + t.getMessage());
+            }
+        });
+
+
+
+
+    }
+
+    private void getExpenses(String token, String id) {
         ExpenseService service = retrofit.create(ExpenseService.class);
 
-        Call<List<Expense>> expenseResponseCall = service.getExpenseByUserId(user_id);
+        Call<List<Expense>> expenseResponseCall = service.getExpenseByUserId(token, id);
+
 
         expenseResponseCall.enqueue(new Callback<List<Expense>>() {
             @Override
             public void onResponse(Call<List<Expense>> call, Response<List<Expense>> response) {
-
                 if(response.isSuccessful()){
-
-                    List<Expense> responseExpenses = response.body();
-                    expenses.clear();
-                    if (responseExpenses != null) {
-                        expenses.addAll(responseExpenses);
-
-                        float totalExpense = 0;
-                        for (Expense expense : expenses) {
-                            totalExpense += expense.getValue();
-                        }
-                        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
-                        String formattedTotalExpense = currencyFormat.format(totalExpense);
-
-                        expensesBundle.putSerializable("expenses", (ArrayList<Expense>) expenses);
-
-
-
-                    }
-                    expenseAdapter.notifyDataSetChanged();
-
-
+                    expenses = response.body();
+                    expensesBundle.putSerializable("expenses", (ArrayList<Expense>) expenses);
+                    expenseViewModel.setExpenses(expenses);
+                    initBadge();
 
                 }else{
-                    Log.e("TAG", "onResponse Error: " + response.code());
+                    Log.e("TAG", "onResponse expense Error: " + response.code());
                 }
             }
 
             @Override
             public void onFailure(Call<List<Expense>> call, Throwable t) {
-
-                Log.e("TAG", "onResponse Failure: " + t.getMessage());
+                Log.e("TAG", "onResponse expense Failure: " + t.getMessage());
             }
         });
 
-    }
 
+
+    }
 
 
 }
